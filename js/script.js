@@ -10,7 +10,7 @@ let productsHtml = document.getElementsByClassName('products')[0];
 let paginationHtml = document.getElementsByClassName('pagination')[0];
 let filterHtml = document.getElementsByClassName('filter')[0];
 filterHtml.addEventListener('change', function (e) {filter(e.target.value)});
-let componentsBaseList = ['Component4', 'Component5', 'Component6', 'Component7' ];
+let componentsBaseList = ['Component1', 'Component2', 'Component3', 'Component4'];
 
 class Product {
     constructor (prop) {
@@ -62,7 +62,7 @@ for(let i = 0; i < countProducts; i++) {
     products.push(new Product({
         title: 'Pizza ' + (i+1),
         image: 'images/product.png',
-        components: ['Component1', 'Component2', 'Component3', randomComponent()],
+        components: [randomComponent(), 'Component5', 'Component6', 'Component7'],
         calories: randomCalories(),
         price: randomPrice()
     }));
