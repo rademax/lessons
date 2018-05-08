@@ -9,7 +9,6 @@ let components = new Set();
 let productsHtml = document.getElementsByClassName('products')[0];
 let paginationHtml = document.getElementsByClassName('pagination')[0];
 let filterHtml = document.getElementsByClassName('filter')[0];
-filterHtml.addEventListener('change', function (e) {filter(e.target.value)});
 let componentsBaseList = ['Component1', 'Component2', 'Component3', 'Component4'];
 
 class Product {
@@ -58,21 +57,19 @@ class Product {
     }
 }
 
-for(let i = 0; i < countProducts; i++) {
-    products.push(new Product({
-        title: 'Pizza ' + (i+1),
-        image: 'images/product.png',
-        components: [randomComponent(), 'Component5', 'Component6', 'Component7'],
-        calories: randomCalories(),
-        price: randomPrice()
-    }));
+filterHtml.addEventListener('change', function (e) {filter(e.target.value)});
+
+function generateProducts() {
+    for(let i = 0; i < countProducts; i++) {
+        products.push(new Product({
+            title: 'Pizza ' + (i+1),
+            image: 'images/product.png',
+            components: [randomComponent(), 'Component5', 'Component6', 'Component7'],
+            calories: randomCalories(),
+            price: randomPrice()
+        }));
+    }
 }
-
-addPagination();
-
-writeProductsOnPage(0);
-
-getComponentsList();
 
 function randomPrice() {
     return Math.floor(Math.random() * (200 - 100 + 1)) + 100;
@@ -87,32 +84,37 @@ function randomComponent() {
     return componentsBaseList[componentId];
 }
 
-function writeProductsOnPage(currentPage, productsLocal = products) {
+function writeProductsOnPage(currentPage, productsLocal = products, type = 'grid') {
     productsHtml.innerHTML = '';
     let countProductsLocal = productsLocal.length;
     let startProduct = currentPage * countProductsOnPage;
+    let lastProduct = startProduct + countProductsOnPage;
 
-    let lastProduct;
-    if(countProductsLocal < startProduct +  countProductsOnPage) {
+    if(countProductsLocal < startProduct +  countProductsOnPage || type === 'list') {
         lastProduct = countProductsLocal;
     }
-    else {
-        lastProduct = startProduct +  countProductsOnPage;
+
+    addPagination(productsLocal, countProductsLocal);
+
+    if(type === 'list') {
+        paginationHtml.innerHTML = '';
     }
+
     for(let i = startProduct; i < lastProduct; i++) {
         productsLocal[i].writeOnPage();
     }
-    addPagination(productsLocal, countProductsLocal);
 }
 
 function toggleList() {
     if(productsHtml.classList.contains('list')) {
         productsHtml.classList.remove('list');
         filterHtml.classList.remove('hidden');
+        writeProductsOnPage(0);
     }
     else {
         productsHtml.classList.add('list');
         filterHtml.classList.add('hidden');
+        writeProductsOnPage(0, products, 'list');
     }
 }
 
@@ -184,3 +186,7 @@ function filter(component) {
     writeProductsOnPage(0, productsFiltered);
 }
 
+generateProducts();
+writeProductsOnPage(0);
+addPagination();
+getComponentsList();
