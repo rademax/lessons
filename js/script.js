@@ -11,6 +11,13 @@ let paginationHtml = document.getElementsByClassName('pagination')[0];
 let filterHtml = document.getElementsByClassName('filter')[0];
 let componentsBaseList = ['Component1', 'Component2', 'Component3', 'Component4'];
 
+// let componentsBaseList = [
+//     {name: 'Component1', price: 10, calories: 50},
+//     {name: 'Component2', price: 20, calories: 60},
+//     {name: 'Component3', price: 30, calories: 70},
+//     {name: 'Component4', price: 40, calories: 30},
+// ];
+
 class Product {
     constructor (prop) {
         this.title = prop.title;
@@ -44,6 +51,12 @@ class Product {
         productPrice.className = 'product-price';
 
         productTitle.innerHTML = 'Title: ' + this.title;
+
+        // let prodComponents = '';
+        // for(let i = 0; i < this.components.length; i++) {
+        //     prodComponents
+        // }
+
         productComponents.innerHTML = 'Components: ' + this.components.join(', ');
         productCalories.innerHTML = 'Calories: ' + this.calories;
         productPrice.innerHTML = 'Price: ' + this.price;
@@ -65,6 +78,13 @@ function generateProducts() {
             title: 'Pizza ' + (i+1),
             image: 'images/product.png',
             components: [randomComponent(), 'Component5', 'Component6', 'Component7'],
+            // components: [
+            //     randomComponent(),
+            //     {name: 'Component5', price: 5, calories: 65},
+            //     {name: 'Component6', price: 15, calories: 35},
+            //     {name: 'Component7', price: 18, calories: 45},
+            //     {name: 'Component8', price: 12, calories: 55},
+            // ],
             calories: randomCalories(),
             price: randomPrice()
         }));
