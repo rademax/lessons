@@ -1,1 +1,1 @@
-# lessons
+It is reposetory for homeworks
