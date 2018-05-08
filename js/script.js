@@ -61,7 +61,7 @@ class Product {
 for(let i = 0; i < countProducts; i++) {
     products.push(new Product({
         title: 'Pizza ' + (i+1),
-        image: '/images/product.png',
+        image: 'images/product.png',
         components: ['Component1', 'Component2', 'Component3', randomComponent()],
         calories: randomCalories(),
         price: randomPrice()
