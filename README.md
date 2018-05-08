@@ -1,1 +1,1 @@
-It is reposetory for homeworks
+It is repository for homeworks
