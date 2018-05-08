@@ -108,9 +108,11 @@ function writeProductsOnPage(currentPage, productsLocal = products) {
 function toggleList() {
     if(productsHtml.classList.contains('list')) {
         productsHtml.classList.remove('list');
+        filterHtml.classList.remove('hidden');
     }
     else {
         productsHtml.classList.add('list');
+        filterHtml.classList.add('hidden');
     }
 }
 
@@ -174,13 +176,11 @@ function filter(component) {
         let componentsCount = products[i].components.length;
         for(let j = 0; j < componentsCount; j++) {
             if(product.components[j].match(component)) {
-                console.log('bb');
                 productsFiltered.push(product);
                 break;
             }
         }
     }
-    console.log(productsFiltered);
     writeProductsOnPage(0, productsFiltered);
 }
 

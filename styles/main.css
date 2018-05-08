@@ -14,6 +14,11 @@
     clear: both;
 }
 
+.hidden {
+    display: none;
+    visibility: hidden;
+}
+
 .header {
     background: black;
     color: white;
