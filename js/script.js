@@ -1,15 +1,20 @@
 'use strict';
 
+let listType = 'grid';
 let products = [];
+let productsFiltered = [];
 let countProducts = 17;
 let countProductsOnPage = 6;
+let selectedProductsList;
+let selectedProductsCount;
 let pagesCount;
-let productsFiltered = [];
 let components = new Set();
 let productsHtml = document.getElementsByClassName('products')[0];
 let paginationHtml = document.getElementsByClassName('pagination')[0];
 let filterHtml = document.getElementsByClassName('filter')[0];
 let componentsBaseList = ['Component1', 'Component2', 'Component3', 'Component4'];
+
+filterHtml.addEventListener('change', function (e) {filter(e.target.value)});
 
 class Product {
     constructor (prop) {
@@ -20,7 +25,7 @@ class Product {
         this.price = prop.price;
     }
 
-    writeOnPage() {
+    formProduct() {
         let productItem = document.createElement('div');
         productItem.className = 'product-item';
 
@@ -57,8 +62,6 @@ class Product {
     }
 }
 
-filterHtml.addEventListener('change', function (e) {filter(e.target.value)});
-
 function generateProducts() {
     for(let i = 0; i < countProducts; i++) {
         products.push(new Product({
@@ -69,6 +72,7 @@ function generateProducts() {
             price: randomPrice()
         }));
     }
+    setProductList(products);
 }
 
 function randomPrice() {
@@ -84,24 +88,35 @@ function randomComponent() {
     return componentsBaseList[componentId];
 }
 
-function writeProductsOnPage(currentPage, productsLocal = products, type = 'grid') {
-    productsHtml.innerHTML = '';
-    let countProductsLocal = productsLocal.length;
-    let startProduct = currentPage * countProductsOnPage;
-    let lastProduct = startProduct + countProductsOnPage;
+function setProductList(productList) {
+    selectedProductsList = productList;
+    selectedProductsCount = selectedProductsList.length;
+}
 
-    if(countProductsLocal < startProduct +  countProductsOnPage || type === 'list') {
-        lastProduct = countProductsLocal;
+function clearHtmlBlock(htmlBlock = productsHtml) {
+    htmlBlock.innerHTML = '';
+}
+
+function defineFirstProductId(currentPage) {
+    return currentPage * countProductsOnPage;
+}
+
+function defineLastProductId(firstProduct) {
+    if(selectedProductsCount < firstProduct + countProductsOnPage || listType === 'list') {
+        return selectedProductsCount;
     }
+    return firstProduct + countProductsOnPage;
+}
 
-    addPagination(productsLocal, countProductsLocal);
+function writeProductsOnPage(currentPage = 0) {
+    let startProductId = defineFirstProductId(currentPage);
+    let lastProductId = defineLastProductId(startProductId);
 
-    if(type === 'list') {
-        paginationHtml.innerHTML = '';
-    }
+    clearHtmlBlock();
+    addPagination();
 
-    for(let i = startProduct; i < lastProduct; i++) {
-        productsLocal[i].writeOnPage();
+    for(let i = startProductId; i < lastProductId; i++) {
+        selectedProductsList[i].formProduct();
     }
 }
 
@@ -109,19 +124,22 @@ function toggleList() {
     if(productsHtml.classList.contains('list')) {
         productsHtml.classList.remove('list');
         filterHtml.classList.remove('hidden');
-        writeProductsOnPage(0);
+        listType = 'grid';
+        writeProductsOnPage();
     }
     else {
         productsHtml.classList.add('list');
         filterHtml.classList.add('hidden');
-        writeProductsOnPage(0, products, 'list');
+        listType = 'list';
+        setProductList(products);
+        writeProductsOnPage();
     }
 }
 
-function addPagination(productsLocal = products, countProductsLocal = countProducts) {
-    paginationHtml.innerHTML = '';
-    pagesCount = Math.ceil(countProductsLocal / countProductsOnPage);
-    if(pagesCount <= 1) {
+function addPagination() {
+    clearHtmlBlock(paginationHtml);
+    pagesCount = Math.ceil(selectedProductsCount / countProductsOnPage);
+    if(pagesCount <= 1 || listType === 'list') {
         return 0;
     }
     for(let i = 1; i <= pagesCount; i++) {
@@ -130,27 +148,28 @@ function addPagination(productsLocal = products, countProductsLocal = countProdu
         paginationItem.id = 'page' + i;
         paginationItem.innerHTML = i;
         paginationItem.onclick = function () {
-            writeProductsOnPage(i-1, productsLocal);
+            writeProductsOnPage(i-1);
         };
         paginationHtml.appendChild(paginationItem);
     }
 }
 
 function sortProducts(param) {
-    products.sort(function (a, b) {
+    selectedProductsList.sort(function (a, b) {
         if (a[param] > b[param]) {
             return 1;
         }
         return -1;
     });
-    writeProductsOnPage(0);
+    writeProductsOnPage();
 }
 
 function createListOfComponents() {
     let componentsList = new Set();
+    componentsList.add('No filter');
     for(let i = 0; i < countProducts; i++) {
-        let product = products[i];
-        let componentsCount = products[i].components.length;
+        let product = selectedProductsList[i];
+        let componentsCount = selectedProductsList[i].components.length;
         for(let j = 0; j < componentsCount; j++) {
             componentsList.add(product.components[j])
         }
@@ -172,6 +191,11 @@ function getComponentsList() {
 }
 
 function filter(component) {
+    if(component === 'No filter') {
+        setProductList(products);
+        writeProductsOnPage();
+        return 0;
+    }
     productsFiltered = [];
     for(let i = 0; i < countProducts; i++) {
         let product = products[i];
@@ -183,10 +207,11 @@ function filter(component) {
             }
         }
     }
-    writeProductsOnPage(0, productsFiltered);
+    setProductList(productsFiltered);
+    writeProductsOnPage();
 }
 
 generateProducts();
-writeProductsOnPage(0);
+writeProductsOnPage();
 addPagination();
 getComponentsList();
