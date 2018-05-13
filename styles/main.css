@@ -43,9 +43,18 @@
     float: left;
     box-sizing: border-box;
     width: 30%;
+    height: 320px;
     margin: 10px;
     padding: 10px;
     border: 1px solid green;
+}
+
+.product-components ul {
+    list-style: none;
+}
+
+.excluded-component {
+    text-decoration: line-through;
 }
 
 .list .product-item {
