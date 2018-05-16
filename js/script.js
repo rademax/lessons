@@ -49,13 +49,17 @@ function toggleComponent(target) {
 }
 
 function changePriceAndCalories(target, increasePrice = true) {
-    let component = target.innerHTML;
+    let componentName = target.innerHTML;
 
     while(target.className !== 'product-content') {
         target = target.parentNode;
     }
 
+    let productItem = target.parentNode;
+
     let title = target.getElementsByClassName('product-title')[0].innerHTML;
+    let calories = target.getElementsByClassName('product-calories')[0];
+    let price = target.getElementsByClassName('product-price')[0];
     let product = {};
 
     for(let i = 0; i < countProducts; i++) {
@@ -65,12 +69,40 @@ function changePriceAndCalories(target, increasePrice = true) {
         }
     }
 
-    // let components = getComponentsList();
-    //
-    // for(let component of components) {
-    //     component = product.components[i];
-    //     if(component.name.match(component)) {
-    //
+    let productComponents = product.components;
+    let productComponentsCount = productComponents.length;
+
+    for(let i = 0; i < productComponentsCount; i++) {
+        let component = productComponents[i];
+        if(component.name.match(componentName)) {
+            component.included = increasePrice;
+            if(increasePrice) {
+                product.price += component.price;
+                product.calories += component.calories;
+            }
+            else {
+                product.price -= component.price;
+                product.calories -= component.calories;
+            }
+            product.formProductInner(productItem);
+            break;
+        }
+    }
+
+    // let components = componentsBaseList;
+    // let componentsCount = componentsBaseList.length;
+    // for(var i = 0; i < componentsCount; i++) {
+    //     if(components[i].name.match(componentName)) {
+    //         if(increasePrice) {
+    //             calories.innerHTML = parseInt(calories.innerHTML) + components[i].calories + ' calories';
+    //             price.innerHTML = parseInt(price.innerHTML) + components[i].price + ' uah';
+    //             break;
+    //         }
+    //         else {
+    //             calories.innerHTML = parseInt(calories.innerHTML) - components[i].calories + ' calories';
+    //             price.innerHTML = parseInt(price.innerHTML) - components[i].price + ' uah';
+    //             break;
+    //         }
     //     }
     // }
 }
@@ -88,6 +120,13 @@ class Product {
         let productItem = document.createElement('div');
         productItem.className = 'product-item';
 
+        this.formProductInner(productItem);
+
+        productsHtml.appendChild(productItem);
+    }
+
+    formProductInner(productItem = '') {
+        productItem.innerHTML = '';
         let productImage = document.createElement('div');
         productImage.className = 'product-image';
         productImage.innerHTML = '<img src="' + this.image + '" alt="' + this.title + '">';
@@ -110,15 +149,13 @@ class Product {
         productTitle.innerHTML = this.title;
         productComponents.innerHTML = 'Selected components: ';
         productComponents.appendChild(this.generateProductComponentsList());
-        productCalories.innerHTML = 'Calories: ' + this.formSum('calories');
-        productPrice.innerHTML = 'Price: ' + this.formSum('price');
+        productCalories.innerHTML = this.calories + ' calories';
+        productPrice.innerHTML = this.price + ' uah';
 
         productContent.appendChild(productTitle);
         productContent.appendChild(productComponents);
         productContent.appendChild(productCalories);
         productContent.appendChild(productPrice);
-
-        productsHtml.appendChild(productItem);
     }
 
     generateProductComponentsList() {
@@ -135,37 +172,50 @@ class Product {
         return productComponentsList;
     }
 
-    formSum(element = 'price') {
-        let sum = this[element];
-        for(let i = 0; i < this.components.length; i++) {
-            let component = this.components[i];
-            if(component['included'] === true) {
-                sum += component[element];
-            }
-        }
-        return sum;
-    }
+    // formSum(element = 'price') {
+    //     let sum = this[element];
+    //     for(let i = 0; i < this.components.length; i++) {
+    //         let component = this.components[i];
+    //         if(component['included'] === true) {
+    //             sum += component[element];
+    //         }
+    //     }
+    //     return sum;
+    // }
 }
 
 function generateProducts() {
     for(let i = 0; i < countProducts; i++) {
+        let components = addComponentsToProduct();
+        let calories = randomCalories(components);
+        let price = randomPrice();
         products.push(new Product({
             title: 'Pizza ' + (i+1),
             image: 'images/product.png',
-            components: addComponentsToProduct(),
-            calories: randomCalories(),
-            price: randomPrice()
+            components: components,
+            calories: calories,
+            price: price
         }));
     }
     setProductList(products);
 }
 
-function randomPrice() {
-    return Math.floor(Math.random() * (200 - 100 + 1)) + 100;
+function randomPrice(components) {
+    let price = Math.floor(Math.random() * (200 - 100 + 1)) + 100;
+    for(component in components) {
+        if(component.included)
+        price += component.price;
+    }
+    return price;
 }
 
 function randomCalories() {
-    return Math.floor(Math.random() * (1000 - 500 + 1)) + 500;
+    let calories = Math.floor(Math.random() * (1000 - 500 + 1)) + 500;
+    for(component in components) {
+        if(component.included)
+        calories += component.calories;
+    }
+    return calories;
 }
 
 function addComponentsToProduct() {
@@ -176,7 +226,11 @@ function addComponentsToProduct() {
         componentsSet.add(randomComponent());
     }
     for(let component of componentsSet) {
-        componentsList.push(component);
+        let componentForInclude = {};
+        for (var key in component) {
+            componentForInclude[key] = component[key];
+        }
+        componentsList.push(componentForInclude);
     }
     return componentsList;
 }
@@ -286,6 +340,7 @@ function getComponentsList() {
         };
         filterHtml.appendChild(option);
     }
+    return components;
 }
 
 function filter(component) {
@@ -313,3 +368,5 @@ generateProducts();
 writeProductsOnPage();
 addPagination();
 getComponentsList();
+
+console.log(products);

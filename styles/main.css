@@ -60,6 +60,7 @@
 .list .product-item {
     display: block;
     width: 100%;
+    height: auto;
 }
 
 .product-item:nth-child(3n) {
