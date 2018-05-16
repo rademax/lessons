@@ -12,9 +12,100 @@ let components = new Set();
 let productsHtml = document.getElementsByClassName('products')[0];
 let paginationHtml = document.getElementsByClassName('pagination')[0];
 let filterHtml = document.getElementsByClassName('filter')[0];
-let componentsBaseList = ['Component1', 'Component2', 'Component3', 'Component4'];
+let componentsBaseList = [
+    {name: 'Component 1', price: 12, calories: 75, included: true},
+    {name: 'Component 2', price: 22, calories: 45, included: true},
+    {name: 'Component 3', price: 15, calories: 50, included: false},
+    {name: 'Component 4', price: 20, calories: 60, included: true},
+    {name: 'Component 5', price: 30, calories: 95, included: false},
+    {name: 'Component 6', price: 11, calories: 52, included: true},
+    {name: 'Component 7', price: 10, calories: 72, included: false},
+    {name: 'Component 8', price: 24, calories: 63, included: true},
+    {name: 'Component 9', price: 35, calories: 55, included: false},
+    {name: 'Component 10', price: 35, calories: 55, included: true},
+];
 
 filterHtml.addEventListener('change', function (e) {filter(e.target.value)});
+
+productsHtml.onclick = function (event) {
+    let target = event.target;
+
+    if(target.tagName !== 'LI') {
+        return 0;
+    }
+
+    toggleComponent(target);
+};
+
+function toggleComponent(target) {
+    if(target.classList.contains('excluded-component')) {
+        target.classList.remove('excluded-component');
+        changePriceAndCalories(target, true);
+    }
+    else {
+        target.classList.add('excluded-component');
+        changePriceAndCalories(target, false);
+    }
+}
+
+function changePriceAndCalories(target, increasePrice = true) {
+    let componentName = target.innerHTML;
+
+    while(target.className !== 'product-content') {
+        target = target.parentNode;
+    }
+
+    let productItem = target.parentNode;
+
+    let title = target.getElementsByClassName('product-title')[0].innerHTML;
+    let calories = target.getElementsByClassName('product-calories')[0];
+    let price = target.getElementsByClassName('product-price')[0];
+    let product = {};
+
+    for(let i = 0; i < countProducts; i++) {
+        product = products[i];
+        if(product.title === title) {
+            break;
+        }
+    }
+
+    let productComponents = product.components;
+    let productComponentsCount = productComponents.length;
+
+    for(let i = 0; i < productComponentsCount; i++) {
+        let component = productComponents[i];
+        if(component.name.match(componentName)) {
+            component.included = increasePrice;
+            if(increasePrice) {
+                product.price += component.price;
+                product.calories += component.calories;
+            }
+            else {
+                product.price -= component.price;
+                product.calories -= component.calories;
+            }
+            product.formProductInner(productItem);
+            break;
+        }
+    }
+
+    // let components = componentsBaseList;
+    // let componentsCount = componentsBaseList.length;
+    // for(var i = 0; i < componentsCount; i++) {
+    //     if(components[i].name.match(componentName)) {
+    //         if(increasePrice) {
+    //             calories.innerHTML = parseInt(calories.innerHTML) + components[i].calories + ' calories';
+    //             price.innerHTML = parseInt(price.innerHTML) + components[i].price + ' uah';
+    //             break;
+    //         }
+    //         else {
+    //             calories.innerHTML = parseInt(calories.innerHTML) - components[i].calories + ' calories';
+    //             price.innerHTML = parseInt(price.innerHTML) - components[i].price + ' uah';
+    //             break;
+    //         }
+    //     }
+    // }
+}
 
 class Product {
     constructor (prop) {
@@ -29,6 +120,13 @@ class Product {
         let productItem = document.createElement('div');
         productItem.className = 'product-item';
 
+        this.formProductInner(productItem);
+
+        productsHtml.appendChild(productItem);
+    }
+
+    formProductInner(productItem = '') {
+        productItem.innerHTML = '';
         let productImage = document.createElement('div');
         productImage.className = 'product-image';
         productImage.innerHTML = '<img src="' + this.image + '" alt="' + this.title + '">';
@@ -48,43 +146,97 @@ class Product {
         productCalories.className = 'product-calories';
         productPrice.className = 'product-price';
 
-        productTitle.innerHTML = 'Title: ' + this.title;
-        productComponents.innerHTML = 'Components: ' + this.components.join(', ');
-        productCalories.innerHTML = 'Calories: ' + this.calories;
-        productPrice.innerHTML = 'Price: ' + this.price;
+        productTitle.innerHTML = this.title;
+        productComponents.innerHTML = 'Selected components: ';
+        productComponents.appendChild(this.generateProductComponentsList());
+        productCalories.innerHTML = this.calories + ' calories';
+        productPrice.innerHTML = this.price + ' uah';
 
         productContent.appendChild(productTitle);
         productContent.appendChild(productComponents);
         productContent.appendChild(productCalories);
         productContent.appendChild(productPrice);
-
-        productsHtml.appendChild(productItem);
     }
+
+    generateProductComponentsList() {
+        let productComponentsList = document.createElement('ul');
+        for(let i = 0; i < this.components.length; i++) {
+            let component = this.components[i];
+            let productComponentsListItem = document.createElement('li');
+            productComponentsListItem.innerHTML = component.name;
+            if(component.included !== true) {
+                productComponentsListItem.className = 'excluded-component';
+            }
+            productComponentsList.appendChild(productComponentsListItem);
+        }
+        return productComponentsList;
+    }
+
+    // formSum(element = 'price') {
+    //     let sum = this[element];
+    //     for(let i = 0; i < this.components.length; i++) {
+    //         let component = this.components[i];
+    //         if(component['included'] === true) {
+    //             sum += component[element];
+    //         }
+    //     }
+    //     return sum;
+    // }
 }
 
 function generateProducts() {
     for(let i = 0; i < countProducts; i++) {
+        let components = addComponentsToProduct();
+        let calories = randomCalories(components);
+        let price = randomPrice();
         products.push(new Product({
             title: 'Pizza ' + (i+1),
             image: 'images/product.png',
-            components: [randomComponent(), 'Component5', 'Component6', 'Component7'],
-            calories: randomCalories(),
-            price: randomPrice()
+            components: components,
+            calories: calories,
+            price: price
         }));
     }
     setProductList(products);
 }
 
-function randomPrice() {
-    return Math.floor(Math.random() * (200 - 100 + 1)) + 100;
+function randomPrice(components) {
+    let price = Math.floor(Math.random() * (200 - 100 + 1)) + 100;
+    for(component in components) {
+        if(component.included)
+        price += component.price;
+    }
+    return price;
 }
 
 function randomCalories() {
-    return Math.floor(Math.random() * (1000 - 500 + 1)) + 500;
+    let calories = Math.floor(Math.random() * (1000 - 500 + 1)) + 500;
+    for(component in components) {
+        if(component.included)
+        calories += component.calories;
+    }
+    return calories;
+}
+
+function addComponentsToProduct() {
+    let componentsSet = new Set();
+    let componentsList = [];
+    let componentsCount = Math.floor(Math.random() * (7 - 3 + 1)) + 3;
+    for(let i = 0; i < componentsCount; i++) {
+        componentsSet.add(randomComponent());
+    }
+    for(let component of componentsSet) {
+        let componentForInclude = {};
+        for (var key in component) {
+            componentForInclude[key] = component[key];
+        }
+        componentsList.push(componentForInclude);
+    }
+    return componentsList;
 }
 
 function randomComponent() {
-    let componentId = Math.floor(Math.random() * 4);
+    let componentId = Math.floor(Math.random() * 10);
     return componentsBaseList[componentId];
 }
 
@@ -168,10 +320,10 @@ function createListOfComponents() {
     let componentsList = new Set();
     componentsList.add('No filter');
     for(let i = 0; i < countProducts; i++) {
-        let product = selectedProductsList[i];
-        let componentsCount = selectedProductsList[i].components.length;
+        let product = products[i];
+        let componentsCount = product.components.length;
         for(let j = 0; j < componentsCount; j++) {
-            componentsList.add(product.components[j])
+            componentsList.add(product.components[j].name);
         }
     }
     return componentsList;
@@ -188,6 +340,7 @@ function getComponentsList() {
         };
         filterHtml.appendChild(option);
     }
+    return components;
 }
 
 function filter(component) {
@@ -199,9 +352,9 @@ function filter(component) {
     productsFiltered = [];
     for(let i = 0; i < countProducts; i++) {
         let product = products[i];
-        let componentsCount = products[i].components.length;
+        let componentsCount = product.components.length;
         for(let j = 0; j < componentsCount; j++) {
-            if(product.components[j].match(component)) {
+            if(product.components[j].name.match(component)) {
                 productsFiltered.push(product);
                 break;
             }
@@ -215,3 +368,5 @@ generateProducts();
 writeProductsOnPage();
 addPagination();
 getComponentsList();
+
+console.log(products);
