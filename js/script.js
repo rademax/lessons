@@ -455,7 +455,7 @@ function addTotalAmount(amount) {
 }
 
 function clearCart() {
-    localStorage.setItem('cart', JSON.stringify(''));
+    localStorage.setItem('cart', JSON.stringify([]));
     clearHtmlBlock(productsHtml);
     addMessageCardIsEmpty();
     addTotalAmount(0);
