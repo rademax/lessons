@@ -24,88 +24,35 @@ let componentsBaseList = [
     {name: 'Component 9', price: 35, calories: 55, included: false},
     {name: 'Component 10', price: 35, calories: 55, included: true},
 ];
+let cart = [];
+let totalAmountHtml = document.getElementsByClassName('total-price')[0];
+let clearCartButton = document.getElementsByClassName('clear-cart')[0];
 
-filterHtml.addEventListener('change', function (e) {filter(e.target.value)});
-
-productsHtml.onclick = function (event) {
-    let target = event.target;
-
-    if(target.tagName !== 'LI') {
-        return 0;
-    }
-
-    toggleComponent(target);
-};
-
-function toggleComponent(target) {
-    if(target.classList.contains('excluded-component')) {
-        target.classList.remove('excluded-component');
-        changePriceAndCalories(target, true);
-    }
-    else {
-        target.classList.add('excluded-component');
-        changePriceAndCalories(target, false);
-    }
+if(filterHtml) {
+    filterHtml.addEventListener('change', function (e) {filter(e.target.value)});
 }
 
-function changePriceAndCalories(target, increasePrice = true) {
-    let componentName = target.innerHTML;
-
-    while(target.className !== 'product-content') {
-        target = target.parentNode;
-    }
-
-    let productItem = target.parentNode;
-
-    let title = target.getElementsByClassName('product-title')[0].innerHTML;
-    let calories = target.getElementsByClassName('product-calories')[0];
-    let price = target.getElementsByClassName('product-price')[0];
-    let product = {};
-
-    for(let i = 0; i < countProducts; i++) {
-        product = products[i];
-        if(product.title === title) {
-            break;
-        }
-    }
-
-    let productComponents = product.components;
-    let productComponentsCount = productComponents.length;
-
-    for(let i = 0; i < productComponentsCount; i++) {
-        let component = productComponents[i];
-        if(component.name.match(componentName)) {
-            component.included = increasePrice;
-            if(increasePrice) {
-                product.price += component.price;
-                product.calories += component.calories;
-            }
-            else {
-                product.price -= component.price;
-                product.calories -= component.calories;
-            }
-            product.formProductInner(productItem);
-            break;
-        }
-    }
-
-    // let components = componentsBaseList;
-    // let componentsCount = componentsBaseList.length;
-    // for(var i = 0; i < componentsCount; i++) {
-    //     if(components[i].name.match(componentName)) {
-    //         if(increasePrice) {
-    //             calories.innerHTML = parseInt(calories.innerHTML) + components[i].calories + ' calories';
-    //             price.innerHTML = parseInt(price.innerHTML) + components[i].price + ' uah';
-    //             break;
-    //         }
-    //         else {
-    //             calories.innerHTML = parseInt(calories.innerHTML) - components[i].calories + ' calories';
-    //             price.innerHTML = parseInt(price.innerHTML) - components[i].price + ' uah';
-    //             break;
-    //         }
-    //     }
-    // }
+if(clearCartButton) {
+    clearCartButton.addEventListener('click', function (e) {clearCart()});
 }
+
+
+if(productsHtml) {
+    productsHtml.onclick = function (event) {
+        let target = event.target;
+
+        if(target.tagName !== 'LI' && target.className !== 'product-buy') {
+            return 0;
+        }
+
+        if(target.tagName === 'LI') {
+            toggleComponent(target);
+        }
+        else if(target.className === 'product-buy') {
+            addToCart(target);
+        }
+    };
+}   
 
 class Product {
     constructor (prop) {
@@ -140,22 +87,27 @@ class Product {
         let productComponents = document.createElement('div');
         let productCalories = document.createElement('div');
         let productPrice = document.createElement('div');
-
+        let productBuy = document.createElement('div');
+        
         productTitle.className = 'product-title';
         productComponents.className = 'product-components';
         productCalories.className = 'product-calories';
         productPrice.className = 'product-price';
+        productBuy.className = 'product-buy';
 
         productTitle.innerHTML = this.title;
         productComponents.innerHTML = 'Selected components: ';
         productComponents.appendChild(this.generateProductComponentsList());
         productCalories.innerHTML = this.calories + ' calories';
         productPrice.innerHTML = this.price + ' uah';
+        productBuy.innerHTML = 'Add to cart';
 
         productContent.appendChild(productTitle);
         productContent.appendChild(productComponents);
         productContent.appendChild(productCalories);
         productContent.appendChild(productPrice);
+
+        productContent.appendChild(productBuy);
     }
 
     generateProductComponentsList() {
@@ -171,17 +123,6 @@ class Product {
         }
         return productComponentsList;
     }
-
-    // formSum(element = 'price') {
-    //     let sum = this[element];
-    //     for(let i = 0; i < this.components.length; i++) {
-    //         let component = this.components[i];
-    //         if(component['included'] === true) {
-    //             sum += component[element];
-    //         }
-    //     }
-    //     return sum;
-    // }
 }
 
 function generateProducts() {
@@ -221,8 +162,8 @@ function randomCalories() {
 function addComponentsToProduct() {
     let componentsSet = new Set();
     let componentsList = [];
-    let componentsCount = Math.floor(Math.random() * (7 - 3 + 1)) + 3;
-    for(let i = 0; i < componentsCount; i++) {
+    let componentsCount = 5;
+    while(componentsSet.size < componentsCount) {
         componentsSet.add(randomComponent());
     }
     for(let component of componentsSet) {
@@ -364,9 +305,185 @@ function filter(component) {
     writeProductsOnPage();
 }
 
-generateProducts();
-writeProductsOnPage();
-addPagination();
-getComponentsList();
+// Function for add/delete component in product
+function toggleComponent(target) {
+    if(target.classList.contains('excluded-component')) {
+        target.classList.remove('excluded-component');
+        changePriceAndCalories(target, true);
+    }
+    else {
+        target.classList.add('excluded-component');
+        changePriceAndCalories(target, false);
+    }
+}
 
-console.log(products);
+// Function for define selected product
+function defineProduct(target) {
+    let title;
+    let product = {};
+
+    target = findProductContent(target);
+
+    title = target.getElementsByClassName('product-title')[0].innerHTML;
+    
+    for(let i = 0; i < countProducts; i++) {
+        product = products[i];
+        if(product.title === title) {
+            break;
+        }
+    }
+
+    return product;
+}
+
+function findProductContent(target) {
+    while(target.className !== 'product-content') {
+        target = target.parentNode;
+    }
+    return target;
+}
+
+function changePriceAndCalories(target, increasePrice = true) {
+    let componentName = target.innerHTML;
+    target = findProductContent(target);
+    let product = defineProduct(target);
+
+    let productItem = target.parentNode;
+    let productComponents = product.components;
+    let productComponentsCount = productComponents.length;
+
+    for(let i = 0; i < productComponentsCount; i++) {
+        let component = productComponents[i];
+        if(component.name.match(componentName)) {
+            component.included = increasePrice;
+            if(increasePrice) {
+                product.price += component.price;
+                product.calories += component.calories;
+            }
+            else {
+                product.price -= component.price;
+                product.calories -= component.calories;
+            }
+            product.formProductInner(productItem);
+            break;
+        }
+    }
+}
+
+// Function created for clone products for cart because one product can contain different components
+function cloneObject(object) {
+    let newObject = {};
+    for (var key in object) {
+        if(object[key] instanceof Object) {
+            newObject[key] = cloneObject(object[key]);
+        }
+        else {
+            newObject[key] = object[key];
+        }
+    }
+    return newObject;
+}
+
+function addToCart(target) {
+    let product = defineProduct(target);
+
+    let productForCart = (product);
+
+    cart.push(productForCart);
+
+    localStorage.setItem('cart', JSON.stringify(cart));
+}
+
+class Cart extends Product {
+    formProductInner(productItem = '') {
+        productItem.innerHTML = '';
+        let productImage = document.createElement('div');
+        productImage.className = 'product-image';
+        productImage.innerHTML = '<img src="' + this.image + '" alt="' + this.title + '">';
+        productItem.appendChild(productImage);
+
+        let productContent = document.createElement('div');
+        productContent.className = 'product-content';
+        productItem.appendChild(productContent);
+
+        let productTitle = document.createElement('div');
+        let productPrice = document.createElement('div');
+        
+        productTitle.className = 'product-title';
+        productPrice.className = 'product-price';
+
+        productTitle.innerHTML = this.title;
+        productPrice.innerHTML = this.price + ' uah';
+
+        productContent.appendChild(productTitle);
+        productContent.appendChild(productPrice);
+    }
+}
+
+function getCart() {
+    let products = [];
+    let cart = JSON.parse(localStorage.getItem('cart'));
+
+    for(let i = 0; i < cart.length; i++) {
+        let product = cart[i];
+        let title = product.title;
+        let image = product.image;
+        let components = product.components;
+        let calories = product.calories;
+        let price = product.price;
+        products.push(new Cart({
+            title: title,
+            image: image,
+            components: components,
+            calories: calories,
+            price: price
+        }));
+    }
+    return products;
+}
+
+function totalAmount(products) {
+    let amount = 0;
+    for(let i = 0; i < products.length; i++) {
+        amount += products[i].price;
+    }
+    return amount;
+}
+
+function addTotalAmount(amount) {
+    totalAmountHtml.innerHTML = amount + ' uah';
+}
+
+function clearCart() {
+    localStorage.setItem('cart', JSON.stringify(''));
+    clearHtmlBlock(productsHtml);
+    addMessageCardIsEmpty();
+    addTotalAmount(0);
+}
+
+function addMessageCardIsEmpty() {
+    let emptyCard = document.createElement('div');
+    emptyCard.className = 'alert-message';
+    emptyCard.innerHTML = 'Card is empty. Go <a href="index.html">back</a> and select products';
+    productsHtml.appendChild(emptyCard);
+}
+
+if(window.location.toString().match('index.html')) {
+    generateProducts();
+    writeProductsOnPage();
+    addPagination();
+    getComponentsList();
+}
+else {
+    let productsCart = getCart();
+    if(productsCart.length) {
+        setProductList(productsCart);
+        let total = totalAmount(productsCart);
+        writeProductsOnPage();
+        addTotalAmount(total);
+    }
+    else {
+        addMessageCardIsEmpty();
+    }
+    
+}
