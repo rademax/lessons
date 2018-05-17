@@ -468,7 +468,7 @@ function addMessageCardIsEmpty() {
     productsHtml.appendChild(emptyCard);
 }
 
-if(window.location.toString().match('index.html')) {
+if(document.getElementsByClassName('service-index')[0]) {
     generateProducts();
     writeProductsOnPage();
     addPagination();
@@ -485,5 +485,4 @@ else {
     else {
         addMessageCardIsEmpty();
     }
-    
 }
